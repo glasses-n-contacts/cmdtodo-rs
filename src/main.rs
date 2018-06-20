@@ -4,20 +4,10 @@ extern crate todo;
 use clap::{App, Arg, SubCommand};
 
 fn main() {
-    let mut debug_mode = false;
     let matches = App::new("todo")
                         .version("1.0")
                         .author("Bill Yu <billyuhan@gmail.com>")
                         .about("Manage todo lists from the command line")
-                        .arg(Arg::with_name("config")
-                                    .short("c")
-                                    .long("config")
-                                    .value_name("FILE")
-                                    .help("Sets a custom config file")
-                                    .takes_value(true))
-                        .arg(Arg::with_name("debug")
-                                    .short("d")
-                                    .help("Turn debugging information on"))
                         .subcommand(SubCommand::with_name("ls")
                                                 .about("List all todos")
                                                 .arg(Arg::with_name("content-only")
@@ -48,16 +38,6 @@ fn main() {
                                                         .multiple(true)
                                                         .help("id(s) of the todo item(s) to be marked")))
                         .get_matches();
-
-    if let Some(o) = matches.value_of("output") {
-        println!("Value for output: {}", o);
-    }
-
-    match matches.occurrences_of("debug") {
-        0 => {},
-        1 => debug_mode = true,
-        _ => panic!("The world is messed up"),
-    }
 
     if let Some(matches) = matches.subcommand_matches("ls") {
         todo::print_todos(
