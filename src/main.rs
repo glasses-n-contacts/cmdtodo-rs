@@ -1,8 +1,10 @@
 extern crate clap;
+extern crate todo;
 
 use clap::{App, Arg, SubCommand};
 
 fn main() {
+    let mut debug_mode = false;
     let matches = App::new("todo")
                         .version("1.0")
                         .author("Bill Yu <billyuhan@gmail.com>")
@@ -18,10 +20,14 @@ fn main() {
                                     .help("Turn debugging information on"))
                         .subcommand(SubCommand::with_name("ls")
                                                 .about("List all todos")
-                                                .arg(Arg::with_name("long")
-                                                    .short("l")
-                                                    .long("long")
-                                                    .help("List all information for each todo")))
+                                                .arg(Arg::with_name("content-only")
+                                                    .short("c")
+                                                    .long("content-only")
+                                                    .help("List only the content for earch todo"))
+                                                .arg(Arg::with_name("done")
+                                                    .short("d")
+                                                    .long("done")
+                                                    .help("Show completed todos as well")))
                         .subcommand(SubCommand::with_name("info")
                                                 .about("Get detailed info about a todo with its id")
                                                 .arg(Arg::with_name("id")
@@ -48,17 +54,16 @@ fn main() {
     }
 
     match matches.occurrences_of("debug") {
-        0 => println!("Debug mode is off"),
-        1 => println!("Debug mode is on"),
+        0 => {},
+        1 => debug_mode = true,
         _ => panic!("The world is messed up"),
     }
 
     if let Some(matches) = matches.subcommand_matches("ls") {
-        if matches.is_present("long") {
-            println!("List long formatted todos");
-        } else {
-            println!("Listing todos");
-        }
+        todo::print_todos(
+            matches.is_present("content-only"),
+            matches.is_present("done"))
+            .unwrap();
     }
 
     if let Some(matches) = matches.subcommand_matches("info") {
