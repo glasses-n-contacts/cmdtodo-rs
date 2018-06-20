@@ -48,7 +48,7 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("info") {
         if let Some(id) = matches.value_of("id") {
-            println!("Inspecting todo with id: {}", id);
+            todo::todo_info(id.to_string()).unwrap();
         }
     }
 
