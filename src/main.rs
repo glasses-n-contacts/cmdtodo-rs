@@ -54,14 +54,14 @@ fn main() {
 
     if let Some(matches) = matches.subcommand_matches("add") {
         if let Some(content) = matches.value_of("content") {
-            println!("Adding todo with content: {}", content);
+            todo::add_todo(content.to_string()).unwrap();
         }
     }
 
     if let Some(matches) = matches.subcommand_matches("do") {
         if let Some(id_values) = matches.values_of("id") {
             let ids: Vec<&str> = id_values.collect();
-            println!("Marking todo(s) completed with id(s): {:?}", ids);
+            todo::do_todos(ids).unwrap();
         }
     }
 }

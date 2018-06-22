@@ -1,5 +1,6 @@
 extern crate reqwest;
 #[macro_use] extern crate serde_derive;
+use std::collections::HashMap;
 
 #[derive(Deserialize, Debug)]
 struct Todo {
@@ -26,13 +27,13 @@ pub fn print_todos(content_only: bool, show_done: bool) -> Result<(), reqwest::E
         }
         let completed = completed_display(todo.done);
         if show_done && !content_only {
-            println!("- [{}] {} {}", completed, todo.id, todo.content);
+            println!("[{}] {} {}", completed, todo.id, todo.content);
         } else if show_done && content_only {
-            println!("- [{}] {}", completed, todo.content);
+            println!("[{}] {}", completed, todo.content);
         } else if !show_done && !content_only {
-            println!("- {} {}", todo.id, todo.content);
+            println!("{} {}", todo.id, todo.content);
         } else {
-            println!("- {}", todo.content);
+            println!("{}", todo.content);
         }
     }
     Ok(())
@@ -44,6 +45,26 @@ pub fn todo_info(id: String) -> Result<(), reqwest::Error> {
         .json()?;
     let todo = json.todo;
     println!("[{}] {} {}", completed_display(todo.done), todo.id, todo.content);
+    Ok(())
+}
+
+pub fn add_todo(content: String) -> Result<(), reqwest::Error> {
+    let mut todo = HashMap::new();
+    todo.insert("content", content);
+    let client = reqwest::Client::new();
+    let res = client.post("http://localhost:5170/")
+        .json(&todo)
+        .send()?;
+    Ok(())
+}
+
+pub fn do_todos(ids: Vec<&str>) -> Result<(), reqwest::Error> {
+    let mut body = HashMap::new();
+    body.insert("ids", ids);
+    let client = reqwest::Client::new();
+    let res = client.post("http://localhost:5170/do")
+        .json(&body)
+        .send()?;
     Ok(())
 }
 
