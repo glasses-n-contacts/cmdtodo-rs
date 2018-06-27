@@ -8,3 +8,4 @@ clap = {version = "~2.31.2", features = ["yaml"]}
 reqwest = "0.8.6"
 serde = "1.0"
 serde_derive = "1.0"
+rpassword = "2.0.0"

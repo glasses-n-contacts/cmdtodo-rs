@@ -4,6 +4,7 @@ extern crate todo;
 use clap::{App, Arg, SubCommand};
 
 fn main() {
+    let mut client = todo::Client::new();
     let matches = App::new("todo")
                         .version("1.0")
                         .author("Bill Yu <billyuhan@gmail.com>")
@@ -37,31 +38,36 @@ fn main() {
                                                         .takes_value(true)
                                                         .multiple(true)
                                                         .help("id(s) of the todo item(s) to be marked")))
+                        .subcommand(SubCommand::with_name("login")
+                                                .about("Log in with credentials"))
                         .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("ls") {
-        todo::print_todos(
+        client.print_todos(
             matches.is_present("content-only"),
-            matches.is_present("done"))
-            .unwrap();
+            matches.is_present("done"));
     }
 
     if let Some(matches) = matches.subcommand_matches("info") {
         if let Some(id) = matches.value_of("id") {
-            todo::todo_info(id.to_string()).unwrap();
+            client.todo_info(id.to_string());
         }
     }
 
     if let Some(matches) = matches.subcommand_matches("add") {
         if let Some(content) = matches.value_of("content") {
-            todo::add_todo(content.to_string()).unwrap();
+            client.add_todo(content.to_string());
         }
     }
 
     if let Some(matches) = matches.subcommand_matches("do") {
         if let Some(id_values) = matches.values_of("id") {
             let ids: Vec<&str> = id_values.collect();
-            todo::do_todos(ids).unwrap();
+            client.do_todos(ids);
         }
+    }
+
+    if let Some(_matches) = matches.subcommand_matches("login") {
+        client.login();
     }
 }
