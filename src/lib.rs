@@ -47,7 +47,7 @@ impl Client {
     }
 
     pub fn print_todos(&mut self, content_only: bool, show_done: bool) {
-        let json: TodosResponse = reqwest::get("http://localhost:5170").unwrap().json().unwrap();
+        let json: TodosResponse = reqwest::get("http://localhost:5170/todo").unwrap().json().unwrap();
         for todo in &json.todos {
             if !show_done && todo.done {
                 continue;
@@ -67,7 +67,7 @@ impl Client {
 
     pub fn todo_info(&mut self, id: String) {
         let json: TodoResponse = reqwest::get(
-            &(String::from("http://localhost:5170/") + &id)).unwrap()
+            &(String::from("http://localhost:5170/todo") + &id)).unwrap()
             .json().unwrap();
         let todo = json.todo;
         println!("[{}] {} {}", completed_display(todo.done), todo.id, todo.content);
@@ -77,7 +77,7 @@ impl Client {
         let mut todo = HashMap::new();
         todo.insert("content", content);
         let client = reqwest::Client::new();
-        let _res = client.post("http://localhost:5170/")
+        let _res = client.post("http://localhost:5170/todo")
             .json(&todo)
             .send()
             .unwrap();
@@ -87,7 +87,7 @@ impl Client {
         let mut body = HashMap::new();
         body.insert("ids", ids);
         let client = reqwest::Client::new();
-        let _res = client.post("http://localhost:5170/do")
+        let _res = client.post("http://localhost:5170/todo/do")
             .json(&body)
             .send()
             .unwrap();
@@ -108,7 +108,7 @@ impl Client {
         credentials.insert("username", username);
         credentials.insert("password", password);
         let client = reqwest::Client::new();
-        let _res = client.post("http://localhost:5170/login")
+        let _res = client.post("http://localhost:5170/user/login")
             .json(&credentials)
             .send()
             .unwrap();
