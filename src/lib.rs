@@ -1,26 +1,17 @@
 extern crate reqwest;
+extern crate rpassword;
 #[macro_use] extern crate serde_derive;
+
+mod login_state;
+
 use std::collections::HashMap;
 use std::io::{self, Write};
-extern crate rpassword;
-
-struct LogInState {
-    username: String,
-    token: String,
-}
-
-impl LogInState {
-    fn new() -> LogInState {
-        LogInState {
-            username: String::new(),
-            token: String::new(),
-        }
-    }
-}
+use self::login_state::LogInState;
+use reqwest::header::{Bearer, Authorization, Headers};
 
 #[derive(Deserialize, Debug)]
 struct Todo {
-    id: u32,
+    id: String,
     done: bool,
     content: String,
 }
@@ -35,19 +26,44 @@ struct TodosResponse {
     todos: Vec<Todo>,
 }
 
+#[derive(Deserialize, Debug)]
+struct LoginResponse {
+    username: String,
+    token: String,
+}
+
 pub struct Client {
     login_state: LogInState,
+    client: reqwest::Client,
 }
 
 impl Client {
     pub fn new() -> Client {
         Client {
             login_state: LogInState::new(),
+            client: reqwest::Client::new(),
         }
     }
 
+    fn build_headers(&mut self) -> Headers {
+        let mut headers = Headers::new();
+        headers.set(
+            Authorization(
+                Bearer {
+                    token: self.login_state.get_token().clone(),
+                }
+            )
+        );
+        headers
+    }
+
     pub fn print_todos(&mut self, content_only: bool, show_done: bool) {
-        let json: TodosResponse = reqwest::get("http://localhost:5170/todo").unwrap().json().unwrap();
+        let json: TodosResponse = self.client.get("http://localhost:5170/todo")
+            .headers(self.build_headers())
+            .send()
+            .unwrap()
+            .json()
+            .unwrap();
         for todo in &json.todos {
             if !show_done && todo.done {
                 continue;
@@ -66,31 +82,37 @@ impl Client {
     }
 
     pub fn todo_info(&mut self, id: String) {
-        let json: TodoResponse = reqwest::get(
-            &(String::from("http://localhost:5170/todo") + &id)).unwrap()
-            .json().unwrap();
+        let json: TodoResponse = self.client.get(
+            &(String::from("http://localhost:5170/todo/") + &id))
+            .headers(self.build_headers())
+            .send()
+            .unwrap()
+            .json()
+            .unwrap();
         let todo = json.todo;
         println!("[{}] {} {}", completed_display(todo.done), todo.id, todo.content);
     }
 
     pub fn add_todo(&mut self, content: String) {
         let mut todo = HashMap::new();
-        todo.insert("content", content);
-        let client = reqwest::Client::new();
-        let _res = client.post("http://localhost:5170/todo")
+        todo.insert("content", content.clone());
+        let _res = self.client.post("http://localhost:5170/todo")
+            .headers(self.build_headers())
             .json(&todo)
             .send()
             .unwrap();
+        println!("Added todo item: {}", content);
     }
 
     pub fn do_todos(&mut self, ids: Vec<&str>) {
         let mut body = HashMap::new();
         body.insert("ids", ids);
-        let client = reqwest::Client::new();
-        let _res = client.post("http://localhost:5170/todo/do")
+        let _res = self.client.post("http://localhost:5170/todo/do")
+            .headers(self.build_headers())
             .json(&body)
             .send()
             .unwrap();
+        println!("Did");
     }
 
     pub fn login(&mut self) {
@@ -102,16 +124,18 @@ impl Client {
         username.pop();
         let password = rpassword::prompt_password_stdout("password: ")
             .expect("Please put your password");
-        println!("Your username is {} password is {}", username, password);
 
         let mut credentials = HashMap::new();
         credentials.insert("username", username);
         credentials.insert("password", password);
-        let client = reqwest::Client::new();
-        let _res = client.post("http://localhost:5170/user/login")
+        let res: LoginResponse = self.client.post("http://localhost:5170/user/login")
             .json(&credentials)
             .send()
+            .unwrap()
+            .json()
             .unwrap();
+        self.login_state.set_token(res.token);
+        println!("Logged in as {}", res.username);
     }
 }
 
